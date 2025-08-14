@@ -422,7 +422,7 @@ const AiResumeScorerLanding = () => {
               <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Your Resume Analysis Results
               </h2>
-              <p className="text-xl text-gray-600">Here's how your resume performs and what you can improve</p>
+              <p className="text-xl text-gray-600">Here&apos;s how your resume performs and what you can improve</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
