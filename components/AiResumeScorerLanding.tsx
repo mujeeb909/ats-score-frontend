@@ -1,13 +1,13 @@
 'use client';
 import React, { useState, useRef } from 'react';
-import { 
-  Upload, 
-  FileText, 
-  Star, 
-  CheckCircle, 
-  ArrowRight, 
-  Zap, 
-  Target, 
+import {
+  Upload,
+  FileText,
+  Star,
+  CheckCircle,
+  ArrowRight,
+  Zap,
+  Target,
   TrendingUp,
   ChevronDown,
   ChevronUp,
@@ -44,7 +44,7 @@ const AiResumeScorerLanding = () => {
     if (file && file.type === 'application/pdf') {
       setIsUploading(true);
       setUploadedFile(file);
-      
+
       // Simulate upload progress
       setTimeout(() => {
         setIsUploading(false);
@@ -145,12 +145,12 @@ const AiResumeScorerLanding = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Get instant AI-powered feedback, professional scoring, and actionable insights 
+              Get instant AI-powered feedback, professional scoring, and actionable insights
               to make your resume stand out from the crowd.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button 
+              <button
                 onClick={() => {
                   const element = document.getElementById('upload-section');
                   if (element) {
@@ -190,8 +190,6 @@ const AiResumeScorerLanding = () => {
         </div>
       </section>
 
-      
-
       {/* How It Works Section */}
       <section id="how-it-works" className="py-20 bg-white/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -214,7 +212,7 @@ const AiResumeScorerLanding = () => {
                 color: "from-blue-500 to-cyan-500"
               },
               {
-                step: "02", 
+                step: "02",
                 title: "AI Analysis",
                 description: "Our advanced AI analyzes structure, content, keywords, and ATS compatibility",
                 icon: Bot,
@@ -412,7 +410,7 @@ const AiResumeScorerLanding = () => {
         </div>
       </section>
 
-      {/* Results Section */}
+      {/* ============== START: Improved Results Section ============== */}
       {analysisResults && (
         <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -424,104 +422,78 @@ const AiResumeScorerLanding = () => {
               <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Your Resume Analysis Results
               </h2>
-              <p className="text-xl text-gray-600">Here&apos;s how your resume performs and what you can improve</p>
+              <p className="text-xl text-gray-600">Here's how your resume performs and what you can improve</p>
             </div>
 
-            {/* Overall Score Card */}
-            <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden mb-8">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-white">
-                    <h3 className="text-2xl font-bold mb-2">Overall Resume Score</h3>
-                    <p className="text-blue-100">Based on industry standards and ATS compatibility</p>
-                  </div>
-                  <div className="text-right text-white">
-                    <div className="text-5xl font-extrabold mb-1">{analysisResults.overall_score}/10</div>
-                    <div className="text-blue-100">
-                      {analysisResults.overall_score >= 8 ? 'Excellent' : 
-                       analysisResults.overall_score >= 6 ? 'Good' :
-                       analysisResults.overall_score >= 4 ? 'Average' : 'Needs Work'}
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              {/* Left Column: Overall Score */}
+              <div className="lg:col-span-1 bg-white rounded-3xl shadow-2xl border border-gray-200 p-8 flex flex-col items-center justify-center text-center">
+                <h3 className="text-2xl font-bold mb-4 text-gray-900">Overall Score</h3>
+                <div className="relative w-48 h-48">
+                  <svg className="w-full h-full" viewBox="0 0 36 36">
+                    <path
+                      className="text-gray-200"
+                      strokeWidth="3"
+                      fill="none"
+                      stroke="currentColor"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-blue-600"
+                      strokeWidth="3"
+                      strokeDasharray={`${analysisResults.overall_score * 10}, 100`}
+                      strokeLinecap="round"
+                      fill="none"
+                      stroke="currentColor"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-5xl font-extrabold text-gray-900">{analysisResults.overall_score}</span>
+                    <span className="text-xl text-gray-500">/10</span>
                   </div>
                 </div>
+                <p className="mt-4 text-lg font-semibold text-gray-700">
+                  {analysisResults.overall_score >= 8 ? 'Excellent' :
+                   analysisResults.overall_score >= 6 ? 'Good' :
+                   analysisResults.overall_score >= 4 ? 'Average' : 'Needs Work'}
+                </p>
+                <p className="text-gray-500 mt-1">Based on industry standards</p>
               </div>
-              
-              <div className="p-8">
-                <div className="grid md:grid-cols-2 gap-8">
-                  {/* Score Breakdown */}
-                  <div>
-                    <h4 className="text-xl font-bold mb-6 text-gray-900">Score Breakdown</h4>
-                    <div className="space-y-6">
-                      {[
-                        { label: 'Skills & Keywords', score: analysisResults.skills_score, color: 'blue' },
-                        { label: 'Experience & Impact', score: analysisResults.experience_score, color: 'purple' },
-                        { label: 'Overall Score', score: analysisResults.overall_score, color: 'green' }
-                      ].map((item, index) => (
-                        <div key={index} className="relative">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold text-gray-700">{item.label}</span>
-                            <span className="font-bold text-gray-900">{item.score}/10</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div 
-                              className={`h-3 rounded-full transition-all duration-1000 ease-out ${
-                                item.color === 'blue' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
-                                item.color === 'purple' ? 'bg-gradient-to-r from-purple-500 to-purple-600' :
-                                'bg-gradient-to-r from-green-500 to-green-600'
-                              }`}
-                              style={{ width: `${(item.score / 10) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Circular Progress Chart */}
-                  <div className="flex items-center justify-center">
-                    <div className="relative w-48 h-48">
-                      <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          stroke="#E5E7EB"
-                          strokeWidth="8"
-                          fill="none"
-                        />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          stroke="url(#gradient)"
-                          strokeWidth="8"
-                          fill="none"
-                          strokeDasharray={`${(analysisResults.overall_score / 10) * 251.2} 251.2`}
-                          strokeLinecap="round"
-                          className="transition-all duration-2000 ease-out"
-                        />
-                        <defs>
-                          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#3B82F6" />
-                            <stop offset="100%" stopColor="#8B5CF6" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-4xl font-extrabold text-gray-900">{analysisResults.overall_score}</div>
-                          <div className="text-gray-500 text-sm">out of 10</div>
-                        </div>
+              {/* Right Column: Score Breakdown */}
+              <div className="lg:col-span-2 bg-white rounded-3xl shadow-2xl border border-gray-200 p-8">
+                <h3 className="text-2xl font-bold mb-6 text-gray-900">Score Breakdown</h3>
+                <div className="space-y-6">
+                  {[
+                    { label: 'Skills & Keywords', score: analysisResults.skills_score, color: 'blue' },
+                    { label: 'Experience & Impact', score: analysisResults.experience_score, color: 'purple' },
+                  ].map((item, index) => (
+                    <div key={index}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-gray-700">{item.label}</span>
+                        <span className="font-bold text-lg text-gray-900">{item.score}/10</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div
+                          className={`h-3 rounded-full ${
+                            item.color === 'blue' ? 'bg-gradient-to-r from-blue-400 to-blue-600' : 'bg-gradient-to-r from-purple-400 to-purple-600'
+                          }`}
+                          style={{ width: `${item.score * 10}%` }}
+                        ></div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
 
             {/* Summary and Feedback Cards */}
             <div className="grid md:grid-cols-2 gap-8 mb-8">
-              {/* Summary Card */}
               <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4">
@@ -532,7 +504,6 @@ const AiResumeScorerLanding = () => {
                 <p className="text-gray-700 leading-relaxed">{analysisResults.summary}</p>
               </div>
 
-              {/* Feedback Card */}
               <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4">
@@ -543,7 +514,7 @@ const AiResumeScorerLanding = () => {
                 <p className="text-gray-700 leading-relaxed">{analysisResults.feedback}</p>
               </div>
             </div>
-
+            
             {/* Action Items */}
             <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-200 p-8 mb-8">
               <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
@@ -579,7 +550,7 @@ const AiResumeScorerLanding = () => {
                   <Download className="w-5 h-5 mr-2" />
                   Download Report
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setAnalysisResults(null);
                     setUploadedFile(null);
@@ -597,6 +568,7 @@ const AiResumeScorerLanding = () => {
           </div>
         </section>
       )}
+      {/* ============== END: Improved Results Section ============== */}
 
       {/* Features Section */}
       <section id="features" className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
@@ -719,7 +691,7 @@ const AiResumeScorerLanding = () => {
                 </div>
               </div>
               <p className="text-gray-400 leading-relaxed max-w-md">
-                Transform your resume with AI-powered insights and land your dream job faster. 
+                Transform your resume with AI-powered insights and land your dream job faster.
                 Get professional feedback in seconds.
               </p>
             </div>
