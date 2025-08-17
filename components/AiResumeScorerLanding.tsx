@@ -12,12 +12,12 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
-  Download,
   Sparkles,
   Bot,
   Award,
   Clock,
 } from 'lucide-react';
+import Image from 'next/image';
 
 // Define the type for analysis results
 interface AnalysisResults {
@@ -152,13 +152,15 @@ const AiResumeScorerLanding = () => {
         return;
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = 'Failed to analyze resume. Please try again.';
       
-      if (error.message.includes('fetch')) {
-        errorMessage = 'Unable to connect to the server. Please check if the API is running.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (error instanceof Error) {
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Unable to connect to the server. Please check if the API is running.';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       setError(errorMessage);
@@ -218,15 +220,14 @@ const AiResumeScorerLanding = () => {
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Bot className="w-6 h-6 text-white" />
+                  <Image src="/logo.png" width={120} height={80} alt="ATS Resume Scorer Logo" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  AI Resume Scorer
+                  ATS Resume Scorer
                 </h1>
-                <p className="text-xs text-gray-500">Powered by Advanced AI</p>
               </div>
             </div>
             <nav className="hidden md:flex space-x-8">
@@ -796,13 +797,12 @@ const AiResumeScorerLanding = () => {
             <div className="md:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Bot className="w-6 h-6 text-white" />
+                <Image src="/logo.png" width={120} height={80} alt="ATS Resume Scorer Logo" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    AI Resume Scorer
+                    ATS Resume Scorer
                   </h3>
-                  <p className="text-xs text-gray-400">Powered by Advanced AI</p>
                 </div>
               </div>
               <p className="text-gray-400 leading-relaxed max-w-md">
@@ -829,15 +829,11 @@ const AiResumeScorerLanding = () => {
                     FAQ
                   </a>
                 </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Pricing
-                  </a>
-                </li>
+              
               </ul>
             </div>
 
-            <div>
+            {/* <div>
               <h4 className="text-lg font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
@@ -861,11 +857,11 @@ const AiResumeScorerLanding = () => {
                   </a>
                 </li>
               </ul>
-            </div>
+            </div> */}
           </div>
 
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 AI Resume Scorer. All rights reserved.</p>
+            <p>&copy; 2025 ATS Resume Scorer. All rights reserved.</p>
           </div>
         </div>
       </footer>
