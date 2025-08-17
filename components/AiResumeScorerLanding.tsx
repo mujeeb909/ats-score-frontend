@@ -78,7 +78,7 @@ const AiResumeScorerLanding = () => {
         const formData = new FormData();
         formData.append('file', uploadedFile);
 
-        response = await fetch('http://13.61.194.111/upload', {
+        response = await fetch('/upload', {
           method: 'POST',
           body: formData,
         });
@@ -111,7 +111,7 @@ const AiResumeScorerLanding = () => {
 
       } else if (activeTab === 'paste' && pastedContent.trim()) {
         // Handle pasted text content
-        response = await fetch('http://13.61.194.111/score', {
+        response = await fetch('/score', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
