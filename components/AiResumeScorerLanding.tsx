@@ -16,7 +16,7 @@ import {
   Sparkles,
   Bot,
   Award,
-  Clock
+  Clock,
 } from 'lucide-react';
 
 // Define the type for analysis results
@@ -26,6 +26,7 @@ interface AnalysisResults {
   experience_score: number;
   overall_score: number;
   feedback: string;
+  missing_aspects?: string[];
 }
 
 const AiResumeScorerLanding = () => {
@@ -35,60 +36,176 @@ const AiResumeScorerLanding = () => {
   const [uploadComplete, setUploadComplete] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
-  const [activeTab, setActiveTab] = useState('upload');
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'upload' | 'paste'>('upload');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Handle file upload with validation
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type === 'application/pdf') {
+    const maxSizeMB = 10; 
+    if (file && file.type === 'application/pdf' && file.size <= maxSizeMB * 1024 * 1024) {
       setIsUploading(true);
       setUploadedFile(file);
+      setError(null);
 
       // Simulate upload progress
       setTimeout(() => {
         setIsUploading(false);
         setUploadComplete(true);
-      }, 2000);
+      }, 1500);
+    } else {
+      setError(
+        file
+          ? `Please upload a valid PDF file under ${maxSizeMB}MB.`
+          : 'No file selected.',
+      );
+      console.error('Invalid file:', file?.type, file?.size);
     }
   };
 
-  const handleAnalyze = () => {
+  // Handle resume analysis
+  const handleAnalyze = async () => {
     setIsAnalyzing(true);
-    // Simulate analysis with dummy data
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      let response;
+
+      if (activeTab === 'upload' && uploadedFile) {
+        // Handle PDF file upload
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+
+        response = await fetch('http://13.61.194.111/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Upload API response:', data);
+
+        // Validate response structure
+        if (
+          !data.summary ||
+          typeof data.skills_score !== 'number' ||
+          typeof data.experience_score !== 'number' ||
+          typeof data.overall_score !== 'number' ||
+          !data.feedback
+        ) {
+          throw new Error('Invalid response format from API.');
+        }
+
+        setAnalysisResults(data);
+        setTimeout(() => {
+            const resultsElement = document.getElementById('results-section');
+            if (resultsElement) {
+              resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+
+      } else if (activeTab === 'paste' && pastedContent.trim()) {
+        // Handle pasted text content
+        response = await fetch('http://13.61.194.111/score', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            resume_text: pastedContent.trim(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Score API response:', data);
+
+        // Validate response structure
+        if (
+          !data.summary ||
+          typeof data.skills_score !== 'number' ||
+          typeof data.experience_score !== 'number' ||
+          typeof data.overall_score !== 'number' ||
+          !data.feedback
+        ) {
+          throw new Error('Invalid response format from API.');
+        }
+
+        setAnalysisResults(data);
+        setTimeout(() => {
+            const resultsElement = document.getElementById('results-section');
+            if (resultsElement) {
+              resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+      } else {
+        setError('Please upload a PDF file or paste resume content.');
+        setIsAnalyzing(false);
+        return;
+      }
+
+    } catch (error: any) {
+      let errorMessage = 'Failed to analyze resume. Please try again.';
+      
+      if (error.message.includes('fetch')) {
+        errorMessage = 'Unable to connect to the server. Please check if the API is running.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      console.error('Analysis error:', error);
+    } finally {
       setIsAnalyzing(false);
-      setAnalysisResults({
-        summary: "John Doe is a Software Engineer with five years of experience in Python, Django, and AI development, but the resume lacks detail on specific accomplishments and projects.",
-        skills_score: 7,
-        experience_score: 3,
-        overall_score: 5,
-        feedback: "The resume is far too brief. It needs to quantify accomplishments within each role, showcasing specific projects, technologies used, and quantifiable results. Adding a skills section with a detailed list of proficiencies would significantly improve its impact."
-      });
-    }, 3000);
+    }
+  };
+
+  // Reset all states
+  const resetForm = () => {
+    setUploadedFile(null);
+    setPastedContent('');
+    setUploadComplete(false);
+    setAnalysisResults(null);
+    setError(null);
+    setIsUploading(false);
+    setIsAnalyzing(false);
+    console.log('Form reset');
   };
 
   const faqData = [
     {
-      question: "How accurate is the AI scoring?",
-      answer: "Our AI uses advanced natural language processing and machine learning algorithms trained on thousands of successful resumes across various industries. The scoring accuracy is over 90% when compared to human recruiters."
+      question: 'How accurate is the AI scoring?',
+      answer:
+        'Our AI uses advanced natural language processing and machine learning algorithms trained on thousands of successful resumes across various industries. The scoring accuracy is over 90% when compared to human recruiters.',
     },
     {
-      question: "What file formats do you support?",
-      answer: "Currently, we support PDF files up to 10MB. You can also paste your resume content directly into the text area for instant analysis."
+      question: 'What file formats do you support?',
+      answer:
+        "Currently, we support PDF files up to 10MB. You can also paste your resume content directly into the text area for instant analysis.",
     },
     {
-      question: "Is my resume data secure?",
-      answer: "Absolutely! We use enterprise-grade encryption and don't store your resume content after analysis. Your privacy and data security are our top priorities."
+      question: 'Is my resume data secure?',
+      answer:
+        "Absolutely! We use enterprise-grade encryption and don't store your resume content after analysis. Your privacy and data security are our top priorities.",
     },
     {
-      question: "How long does the analysis take?",
-      answer: "Most resume analyses are completed within 30-60 seconds. Complex resumes with multiple sections may take up to 2 minutes."
+      question: 'How long does the analysis take?',
+      answer:
+        "Most resume analyses are completed within 30-60 seconds. Complex resumes with multiple sections may take up to 2 minutes.",
     },
     {
-      question: "What kind of feedback do I get?",
-      answer: "You'll receive a comprehensive score, specific improvement suggestions, keyword optimization tips, formatting recommendations, and ATS compatibility insights."
-    }
+      question: 'What kind of feedback do I get?',
+      answer:
+        "You'll receive a comprehensive score, specific improvement suggestions, keyword optimization tips, formatting recommendations, and ATS compatibility insights.",
+    },
   ];
 
   return (
@@ -113,9 +230,15 @@ const AiResumeScorerLanding = () => {
               </div>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <a href="#how-it-works" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">How It Works</a>
-              <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Features</a>
-              <a href="#faq" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">FAQ</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                How It Works
+              </a>
+              <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                Features
+              </a>
+              <a href="#faq" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                FAQ
+              </a>
             </nav>
           </div>
         </div>
@@ -128,14 +251,14 @@ const AiResumeScorerLanding = () => {
           <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-700"></div>
           <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
         </div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 font-semibold text-sm mb-8 animate-bounce">
               <Sparkles className="w-4 h-4 mr-2" />
               AI-Powered Resume Analysis
             </div>
-            
+
             <h1 className="text-5xl md:text-7xl font-extrabold mb-8">
               <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Score Your Resume
@@ -143,12 +266,12 @@ const AiResumeScorerLanding = () => {
               <br />
               <span className="text-gray-900">Land Your Dream Job</span>
             </h1>
-            
+
             <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Get instant AI-powered feedback, professional scoring, and actionable insights
-              to make your resume stand out from the crowd.
+              Get instant AI-powered feedback, professional scoring, and actionable insights to make your resume stand
+              out from the crowd.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button
                 onClick={() => {
@@ -165,13 +288,13 @@ const AiResumeScorerLanding = () => {
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
-              
+
               <button className="flex items-center px-8 py-4 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-lg hover:border-blue-300 hover:text-blue-600 transition-all duration-300">
                 <Eye className="w-5 h-5 mr-2" />
                 Watch Demo
               </button>
             </div>
-            
+
             <div className="mt-16 flex items-center justify-center space-x-8 text-gray-500">
               <div className="flex items-center">
                 <Star className="w-5 h-5 text-yellow-400 fill-current mr-2" />
@@ -201,33 +324,36 @@ const AiResumeScorerLanding = () => {
               Our advanced AI analyzes your resume in three simple steps
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                step: "01",
-                title: "Upload Your Resume",
-                description: "Simply upload your PDF resume or paste your content directly into our platform",
+                step: '01',
+                title: 'Upload Your Resume',
+                description: 'Simply upload your PDF resume or paste your content directly into our platform',
                 icon: Upload,
-                color: "from-blue-500 to-cyan-500"
+                color: 'from-blue-500 to-cyan-500',
               },
               {
-                step: "02",
-                title: "AI Analysis",
-                description: "Our advanced AI analyzes structure, content, keywords, and ATS compatibility",
+                step: '02',
+                title: 'AI Analysis',
+                description: 'Our advanced AI analyzes structure, content, keywords, and ATS compatibility',
                 icon: Bot,
-                color: "from-purple-500 to-pink-500"
+                color: 'from-purple-500 to-pink-500',
               },
               {
-                step: "03",
-                title: "Get Insights",
-                description: "Receive detailed feedback, scoring, and actionable recommendations",
+                step: '03',
+                title: 'Get Insights',
+                description: 'Receive detailed feedback, scoring, and actionable recommendations',
                 icon: TrendingUp,
-                color: "from-green-500 to-teal-500"
-              }
+                color: 'from-green-500 to-teal-500',
+              },
             ].map((item, index) => (
               <div key={index} className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl" style={{backgroundImage: `linear-gradient(to right, ${item.color.split(' ')[1]}, ${item.color.split(' ')[3]})`}}></div>
+                <div
+                  className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"
+                  style={{ backgroundImage: `linear-gradient(to right, ${item.color.split(' ')[1]}, ${item.color.split(' ')[3]})` }}
+                ></div>
                 <div className="relative p-8 rounded-2xl bg-white shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                   <div className="flex items-center mb-6">
                     <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${item.color} flex items-center justify-center mr-4`}>
@@ -255,6 +381,13 @@ const AiResumeScorerLanding = () => {
             </h2>
             <p className="text-xl text-gray-600">Choose your preferred method to get started</p>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center">
+              {error}
+            </div>
+          )}
 
           {/* Tab Navigation */}
           <div className="flex justify-center mb-8">
@@ -296,7 +429,7 @@ const AiResumeScorerLanding = () => {
                     accept=".pdf"
                     className="hidden"
                   />
-                  
+
                   {isUploading ? (
                     <div className="text-center">
                       <div className="relative w-24 h-24 mx-auto mb-6">
@@ -307,7 +440,7 @@ const AiResumeScorerLanding = () => {
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">Uploading Your Resume</h3>
                       <p className="text-gray-600">Please wait while we process your file...</p>
                       <div className="mt-6 w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full animate-pulse" style={{width: '70%'}}></div>
+                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full animate-pulse" style={{ width: '70%' }}></div>
                       </div>
                     </div>
                   ) : (
@@ -333,20 +466,23 @@ const AiResumeScorerLanding = () => {
                       <CheckCircle className="w-8 h-8 text-green-600 mr-4" />
                       <div>
                         <h4 className="text-lg font-semibold text-green-900">{uploadedFile?.name}</h4>
-                        <p className="text-green-600">Successfully uploaded • {(uploadedFile?.size ? (uploadedFile.size / 1024 / 1024).toFixed(2) : '0')} MB</p>
+                        <p className="text-green-600">
+                          Successfully uploaded • {(uploadedFile?.size ? (uploadedFile.size / 1024 / 1024).toFixed(2) : '0')} MB
+                        </p>
                       </div>
                     </div>
                     <button
                       onClick={() => {
                         setUploadedFile(null);
                         setUploadComplete(false);
+                        setError(null);
                       }}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       ✕
                     </button>
                   </div>
-                  
+
                   <div className="mt-8 text-center">
                     <button
                       onClick={handleAnalyze}
@@ -385,7 +521,7 @@ const AiResumeScorerLanding = () => {
                   className="w-full h-64 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-700"
                 />
               </div>
-              
+
               <div className="text-center">
                 <button
                   onClick={handleAnalyze}
@@ -410,9 +546,9 @@ const AiResumeScorerLanding = () => {
         </div>
       </section>
 
-      {/* ============== START: Improved Results Section ============== */}
+      {/* Results Section */}
       {analysisResults && (
-        <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+        <section id="results-section" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold text-sm mb-4">
@@ -458,9 +594,7 @@ const AiResumeScorerLanding = () => {
                   </div>
                 </div>
                 <p className="mt-4 text-lg font-semibold text-gray-700">
-                  {analysisResults.overall_score >= 8 ? 'Excellent' :
-                   analysisResults.overall_score >= 6 ? 'Good' :
-                   analysisResults.overall_score >= 4 ? 'Average' : 'Needs Work'}
+                  {analysisResults.overall_score >= 8 ? 'Excellent' : analysisResults.overall_score >= 6 ? 'Good' : analysisResults.overall_score >= 4 ? 'Average' : 'Needs Work'}
                 </p>
                 <p className="text-gray-500 mt-1">Based on industry standards</p>
               </div>
@@ -480,9 +614,7 @@ const AiResumeScorerLanding = () => {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3">
                         <div
-                          className={`h-3 rounded-full ${
-                            item.color === 'blue' ? 'bg-gradient-to-r from-blue-400 to-blue-600' : 'bg-gradient-to-r from-purple-400 to-purple-600'
-                          }`}
+                          className={`h-3 rounded-full ${item.color === 'blue' ? 'bg-gradient-to-r from-blue-400 to-blue-600' : 'bg-gradient-to-r from-purple-400 to-purple-600'}`}
                           style={{ width: `${item.score * 10}%` }}
                         ></div>
                       </div>
@@ -514,34 +646,28 @@ const AiResumeScorerLanding = () => {
                 <p className="text-gray-700 leading-relaxed">{analysisResults.feedback}</p>
               </div>
             </div>
-            
-            {/* Action Items */}
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-200 p-8 mb-8">
-              <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <Zap className="w-6 h-6 text-orange-500 mr-3" />
-                Priority Action Items
-              </h4>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white font-bold text-sm">1</span>
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-gray-900 mb-2">Add Quantifiable Achievements</h5>
-                    <p className="text-gray-600">Include specific numbers, percentages, and metrics to showcase your impact in previous roles.</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white font-bold text-sm">2</span>
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-gray-900 mb-2">Expand Technical Skills</h5>
-                    <p className="text-gray-600">Create a dedicated skills section with relevant technologies and tools for your target role.</p>
-                  </div>
+
+            {/* Missing Aspects Section */}
+            {analysisResults.missing_aspects && analysisResults.missing_aspects.length > 0 && (
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-200 p-8 mb-8">
+                <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <Zap className="w-6 h-6 text-orange-500 mr-3" />
+                  Areas to Improve
+                </h4>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {analysisResults.missing_aspects.map((aspect, index) => (
+                    <div key={index} className="flex items-center space-x-4">
+                      <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-white font-bold text-sm">{index + 1}</span>
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-gray-900 mb-2">{aspect}</h5>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Action Buttons */}
             <div className="text-center space-y-4">
@@ -551,12 +677,7 @@ const AiResumeScorerLanding = () => {
                   Download Report
                 </button>
                 <button
-                  onClick={() => {
-                    setAnalysisResults(null);
-                    setUploadedFile(null);
-                    setUploadComplete(false);
-                    setPastedContent('');
-                  }}
+                  onClick={resetForm}
                   className="inline-flex items-center px-8 py-4 rounded-xl border-2 border-blue-600 text-blue-600 font-semibold text-lg hover:bg-blue-600 hover:text-white transition-all duration-300"
                 >
                   <Upload className="w-5 h-5 mr-2" />
@@ -568,7 +689,6 @@ const AiResumeScorerLanding = () => {
           </div>
         </section>
       )}
-      {/* ============== END: Improved Results Section ============== */}
 
       {/* Features Section */}
       <section id="features" className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
@@ -581,45 +701,45 @@ const AiResumeScorerLanding = () => {
               Everything you need to create a winning resume that gets noticed
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
                 icon: Target,
-                title: "ATS Compatibility",
-                description: "Ensure your resume passes Applicant Tracking Systems with our advanced compatibility check.",
-                color: "from-blue-500 to-cyan-500"
+                title: 'ATS Compatibility',
+                description: 'Ensure your resume passes Applicant Tracking Systems with our advanced compatibility check.',
+                color: 'from-blue-500 to-cyan-500',
               },
               {
                 icon: Zap,
-                title: "Instant Scoring",
-                description: "Get immediate feedback with detailed scoring across multiple resume criteria.",
-                color: "from-purple-500 to-pink-500"
+                title: 'Instant Scoring',
+                description: 'Get immediate feedback with detailed scoring across multiple resume criteria.',
+                color: 'from-purple-500 to-pink-500',
               },
               {
                 icon: TrendingUp,
-                title: "Industry Insights",
-                description: "Receive tailored suggestions based on your industry and target job positions.",
-                color: "from-green-500 to-teal-500"
+                title: 'Industry Insights',
+                description: 'Receive tailored suggestions based on your industry and target job positions.',
+                color: 'from-green-500 to-teal-500',
               },
               {
                 icon: FileText,
-                title: "Content Analysis",
-                description: "Deep analysis of your resume content, structure, and keyword optimization.",
-                color: "from-orange-500 to-red-500"
+                title: 'Content Analysis',
+                description: 'Deep analysis of your resume content, structure, and keyword optimization.',
+                color: 'from-orange-500 to-red-500',
               },
               {
                 icon: Clock,
-                title: "Quick Results",
-                description: "Get comprehensive feedback in under 60 seconds with our lightning-fast AI.",
-                color: "from-indigo-500 to-purple-500"
+                title: 'Quick Results',
+                description: 'Get comprehensive feedback in under 60 seconds with our lightning-fast AI.',
+                color: 'from-indigo-500 to-purple-500',
               },
               {
                 icon: Award,
-                title: "Professional Tips",
-                description: "Access expert advice and best practices from recruitment professionals.",
-                color: "from-pink-500 to-rose-500"
-              }
+                title: 'Professional Tips',
+                description: 'Access expert advice and best practices from recruitment professionals.',
+                color: 'from-pink-500 to-rose-500',
+              },
             ].map((feature, index) => (
               <div key={index} className="group relative overflow-hidden">
                 <div className="absolute inset-0 bg-white rounded-2xl shadow-lg group-hover:shadow-2xl transition-all duration-300 transform group-hover:scale-105"></div>
@@ -643,11 +763,9 @@ const AiResumeScorerLanding = () => {
             <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-gray-600">
-              Everything you need to know about our AI Resume Scorer
-            </p>
+            <p className="text-xl text-gray-600">Everything you need to know about our AI Resume Scorer</p>
           </div>
-          
+
           <div className="space-y-4">
             {faqData.map((faq, index) => (
               <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
@@ -691,32 +809,64 @@ const AiResumeScorerLanding = () => {
                 </div>
               </div>
               <p className="text-gray-400 leading-relaxed max-w-md">
-                Transform your resume with AI-powered insights and land your dream job faster.
-                Get professional feedback in seconds.
+                Transform your resume with AI-powered insights and land your dream job faster. Get professional feedback
+                in seconds.
               </p>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                <li>
+                  <a href="#how-it-works" className="hover:text-white transition-colors">
+                    How It Works
+                  </a>
+                </li>
+                <li>
+                  <a href="#features" className="hover:text-white transition-colors">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#faq" className="hover:text-white transition-colors">
+                    FAQ
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Pricing
+                  </a>
+                </li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Contact Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Help Center
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
             <p>&copy; 2025 AI Resume Scorer. All rights reserved.</p>
           </div>
