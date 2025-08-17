@@ -672,10 +672,7 @@ const AiResumeScorerLanding = () => {
             {/* Action Buttons */}
             <div className="text-center space-y-4">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="inline-flex items-center px-8 py-4 rounded-xl bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                  <Download className="w-5 h-5 mr-2" />
-                  Download Report
-                </button>
+               
                 <button
                   onClick={resetForm}
                   className="inline-flex items-center px-8 py-4 rounded-xl border-2 border-blue-600 text-blue-600 font-semibold text-lg hover:bg-blue-600 hover:text-white transition-all duration-300"
