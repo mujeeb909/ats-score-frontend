@@ -62,6 +62,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
         <link rel="canonical" href="https://www.ats-score.com" />
         <meta name="theme-color" content="#ffffff" />
+        <meta name="google-adsense-account" content="ca-pub-7871478624158126"></meta>
         <link rel="alternate" href="https://www.ats-score.com" hrefLang="en" />
         <meta
           name="google-site-verification"
