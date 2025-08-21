@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.ats-score.com
+
+# Sitemaps
+Sitemap: https://www.ats-score.com/sitemap.xml
