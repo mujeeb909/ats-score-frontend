@@ -25,21 +25,13 @@ export const metadata: Metadata = {
     "job application tips",
     "career improvement",
   ],
-  authors: [{ name: "Your Name", url: "https://yourdomain.com" }],
+  authors: [{ name: "Your Name", url: "https://www.ats-score.com" }],
   openGraph: {
     title: "AI Resume Scorer – Get Instant Feedback",
     description:
       "Upload your resume, get a score, and actionable AI feedback instantly.",
-    url: "https://yourdomain.com",
+    url: "https://www.ats-score.com",
     siteName: "AI Resume Scorer",
-    images: [
-      {
-        url: "https://yourdomain.com/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "AI Resume Scorer Preview",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -48,10 +40,9 @@ export const metadata: Metadata = {
     title: "AI Resume Scorer – Instant Resume Feedback",
     description:
       "Improve your resume with AI scoring and actionable tips in seconds.",
-    images: ["https://yourdomain.com/og-image.png"],
     creator: "@yourtwitter",
   },
-  metadataBase: new URL("https://yourdomain.com"),
+  metadataBase: new URL("https://www.ats-score.com"),
   robots: {
     index: true,
     follow: true,
@@ -69,11 +60,23 @@ export default function RootLayout({
       <head>
         {/* Extra SEO tags */}
         <link rel="icon" href="/favicon.ico" />
-        <link rel="canonical" href="https://yourdomain.com" />
+        <link rel="canonical" href="https://www.ats-score.com" />
         <meta name="theme-color" content="#ffffff" />
+        <link rel="alternate" href="https://www.ats-score.com" hrefLang="en" />
         <meta
           name="google-site-verification"
           content="YOUR_GOOGLE_VERIFICATION_CODE"
+        />
+        <meta
+          property="og:image"
+          content="https://www.ats-score.com/og-image.png"
+        />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:image"
+          content="https://www.ats-score.com/og-image.png"
         />
         <script
           type="application/ld+json"
@@ -82,7 +85,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebApplication",
               name: "AI Resume Scorer",
-              url: "https://yourdomain.com",
+              url: "https://www.ats-score.com",
               description:
                 "Upload your resume and get instant AI-powered feedback and scores.",
               applicationCategory: "BusinessApplication",
