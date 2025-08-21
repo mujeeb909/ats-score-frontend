@@ -78,8 +78,8 @@ const AiResumeScorerLanding = () => {
         const formData = new FormData();
         formData.append('file', uploadedFile);
 
-        response = await fetch('http://13.61.194.111/upload', {
-          method: 'POST',
+        response = await fetch("/api/upload", {
+          method: "POST",
           body: formData,
         });
 
@@ -111,11 +111,9 @@ const AiResumeScorerLanding = () => {
 
       } else if (activeTab === 'paste' && pastedContent.trim()) {
         // Handle pasted text content
-        response = await fetch('http://13.61.194.111/score', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        response = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             resume_text: pastedContent.trim(),
           }),
